@@ -37,7 +37,7 @@ const Footer = () => {
                     />
                 </svg>
             ),
-            url: '#github',
+            url: 'https://github.com/kenzy004/eduboard',
         },
         {
             name: 'Twitter',
