@@ -196,13 +196,12 @@ router.post('/forgot-password', async (req, res) => {
 
         const user = await User.findOne({ email });
         if (!user) {
-            // Return 200 even if user not found to prevent email enumeration
-            return res.status(200).json({ message: 'If an account with that email exists, an OTP has been sent.' });
+            return res.status(404).json({ message: 'No account found with this email address.' });
         }
 
         // Generate 6-digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        
+
         // Hash the OTP
         const salt = await bcrypt.genSalt(10);
         const hashedOtp = await bcrypt.hash(otp, salt);
@@ -233,12 +232,12 @@ router.post('/forgot-password', async (req, res) => {
 router.post('/verify-otp', async (req, res) => {
     try {
         const { email, otp } = req.body;
-        
+
         if (!email || !otp) {
             return res.status(400).json({ message: 'Email and OTP are required' });
         }
 
-        const user = await User.findOne({ 
+        const user = await User.findOne({
             email,
             resetPasswordExpire: { $gt: Date.now() }
         });
@@ -248,21 +247,21 @@ router.post('/verify-otp', async (req, res) => {
         }
 
         const isMatch = await bcrypt.compare(otp.toString(), user.resetPasswordOTP);
-        
+
         if (!isMatch) {
             return res.status(400).json({ message: 'Invalid or expired OTP' });
         }
 
         // Generate a temporary token for resetting password
         const resetToken = jwt.sign(
-            { id: user._id, type: 'password_reset' }, 
-            JWT_SECRET, 
+            { id: user._id, type: 'password_reset' },
+            JWT_SECRET,
             { expiresIn: '15m' }
         );
 
-        res.status(200).json({ 
+        res.status(200).json({
             message: 'OTP verified successfully',
-            resetToken 
+            resetToken
         });
     } catch (error) {
         console.error('Verify OTP error:', error);
@@ -303,11 +302,11 @@ router.put('/reset-password', async (req, res) => {
         // Hash new password
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(newPassword, salt);
-        
+
         // Clear OTP fields
         user.resetPasswordOTP = undefined;
         user.resetPasswordExpire = undefined;
-        
+
         await user.save();
 
         res.status(200).json({ message: 'Password reset successfully' });

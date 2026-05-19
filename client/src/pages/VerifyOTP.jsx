@@ -11,8 +11,9 @@ const VerifyOTP = () => {
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isResending, setIsResending] = useState(false);
     const [resendTimer, setResendTimer] = useState(60);
-    
+
     const navigate = useNavigate();
     const location = useLocation();
     const email = location.state?.email;
@@ -50,16 +51,19 @@ const VerifyOTP = () => {
     };
 
     const handleResend = async () => {
-        if (resendTimer > 0) return;
-        
+        if (resendTimer > 0 || isResending) return;
+
         setError('');
         setSuccessMessage('');
+        setIsResending(true);
         try {
             await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/forgot-password`, { email });
             setSuccessMessage('OTP resent successfully!');
             setResendTimer(60);
         } catch (err) {
             setError('Failed to resend OTP. Please try again.');
+        } finally {
+            setIsResending(false);
         }
     };
 
@@ -108,7 +112,7 @@ const VerifyOTP = () => {
                         {error}
                     </motion.div>
                 )}
-                
+
                 {successMessage && (
                     <motion.div
                         initial={{ height: 0, opacity: 0 }}
@@ -144,7 +148,7 @@ const VerifyOTP = () => {
                         disabled={isLoading || otp.length < 6}
                         className={`w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 group transition-all mt-4 ${(isLoading || otp.length < 6) ? 'opacity-70 cursor-not-allowed' : ''}`}
                     >
-                        {isLoading ? 'Verifying...' : 'Verify & Continue'} 
+                        {isLoading ? 'Verifying...' : 'Verify & Continue'}
                         {!isLoading && <FaArrowRight className="group-hover:translate-x-1 transition-transform" />}
                     </motion.button>
                 </form>
@@ -153,10 +157,10 @@ const VerifyOTP = () => {
                     <span className="text-slate-400">Didn't receive code?</span>
                     <button 
                         onClick={handleResend}
-                        disabled={resendTimer > 0}
-                        className={`font-medium ${resendTimer > 0 ? 'text-slate-500 cursor-not-allowed' : 'text-indigo-400 hover:text-indigo-300'}`}
+                        disabled={resendTimer > 0 || isResending}
+                        className={`font-medium ${(resendTimer > 0 || isResending) ? 'text-slate-500 cursor-not-allowed' : 'text-indigo-400 hover:text-indigo-300 cursor-pointer'}`}
                     >
-                        {resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Resend OTP'}
+                        {isResending ? 'Sending...' : resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Resend OTP'}
                     </button>
                 </div>
             </motion.div>
