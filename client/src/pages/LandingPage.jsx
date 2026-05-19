@@ -1,8 +1,8 @@
-import React, { useEffect, useRef } from "react"
-import { Link } from "react-router-dom"
-import { motion } from "framer-motion"
-import Navbar from "../components/Navbar"
-import Footer from "../components/Footer"
+import React, { useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 const LandingPage = () => {
     const heroRef = useRef(null)
@@ -286,18 +286,15 @@ const LandingPage = () => {
     ]
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white">
-            <Navbar />
+        <div className="min-h-screen bg-slate-950 text-white pt-16 overflow-hidden ">
 
             {/* Hero Section */}
-            <section
-                ref={heroRef}
-                className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16"
-            >
+            <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
                 {/* Grid Background */}
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f15_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f15_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
 
                 {/* Animated Background Elements */}
+                <div className="absolute inset-0 overflow-hidden">
                 <motion.div
                     animate={{
                         x: [0, 100, 0],
@@ -348,6 +345,7 @@ const LandingPage = () => {
                     }}
                     className="absolute top-10 right-10 w-72 h-72 bg-blue-500/15 rounded-full blur-3xl"
                 />
+                </div>
 
                 <div className="relative max-w-7xl mx-auto px-6 lg:px-8 text-center">
                     <motion.h1
