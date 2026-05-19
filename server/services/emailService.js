@@ -285,8 +285,83 @@ const sendRejectionEmail = async (teacherEmail, teacherName, reason) => {
     }
 };
 
+/**
+ * Send password reset OTP email
+ */
+const sendPasswordResetEmail = async (userEmail, userName, otp) => {
+    const htmlContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+            <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+                <h1 style="color: white; margin: 0; font-size: 24px;">⚡ EduBoard</h1>
+                <p style="color: #fef3c7; margin: 10px 0 0 0;">Password Reset Request</p>
+            </div>
+            
+            <div style="background-color: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <h2 style="color: #1e293b; margin-top: 0;">Reset Your Password</h2>
+                
+                <p style="color: #475569; line-height: 1.6;">
+                    Hi <strong>${userName}</strong>,
+                </p>
+                
+                <p style="color: #475569; line-height: 1.6;">
+                    We received a request to reset the password for your EduBoard account. Use the One-Time Password (OTP) below to proceed.
+                </p>
+                
+                <div style="background-color: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center; border: 2px dashed #f59e0b;">
+                    <p style="margin: 0; color: #b45309; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Your OTP</p>
+                    <p style="margin: 10px 0 0 0; color: #78350f; font-size: 32px; font-weight: bold; letter-spacing: 4px;">${otp}</p>
+                </div>
+                
+                <p style="color: #475569; line-height: 1.6; font-size: 14px;">
+                    <strong>Note:</strong> This OTP is valid for the next 10 minutes. If you did not request a password reset, you can safely ignore this email.
+                </p>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px; color: #94a3b8; font-size: 12px;">
+                <p>This is an automated email from EduBoard</p>
+            </div>
+        </div>
+    `;
+
+    try {
+        if (USE_GMAIL) {
+            // Send via Gmail SMTP
+            const info = await transporter.sendMail({
+                from: `"EduBoard" <${process.env.SMTP_USER}>`,
+                to: userEmail,
+                subject: '🔒 Your Password Reset OTP',
+                html: htmlContent
+            });
+            console.log('✅ Password reset email sent via Gmail to:', userEmail);
+            return { success: true, messageId: info.messageId };
+        } else {
+            // Send via Resend
+            const { data, error } = await resend.emails.send({
+                from: 'EduBoard <onboarding@resend.dev>',
+                to: [userEmail],
+                subject: '🔒 Your Password Reset OTP',
+                html: htmlContent
+            });
+
+            if (error) {
+                console.error('❌ Failed to send password reset email:', error);
+                return { success: false, error: error.message };
+            }
+
+            console.log('✅ Password reset email sent via Resend to:', userEmail);
+            return { success: true, messageId: data.id };
+        }
+    } catch (error) {
+        console.error('❌ Failed to send password reset email:', error.message);
+        return { success: false, error: error.message };
+    }
+};
+
 module.exports = {
     sendTeacherRegistrationNotification,
     sendApprovalEmail,
-    sendRejectionEmail
+    sendRejectionEmail,
+    sendPasswordResetEmail
 };
+
+
