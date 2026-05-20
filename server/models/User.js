@@ -46,7 +46,13 @@ const UserSchema = new mongoose.Schema({
     savedBoards: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Board'
-    }]
+    }],
+    resetPasswordOTP: {
+        type: String
+    },
+    resetPasswordExpire: {
+        type: Date
+    }
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', UserSchema);

@@ -2,7 +2,7 @@ const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-
+const { sendPasswordResetEmail } = require('../services/emailService');
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey'; // Use env in prod!
 
 // REGISTER
@@ -183,6 +183,136 @@ router.post('/login', async (req, res) => {
             message: err.message,
             details: process.env.NODE_ENV === 'development' ? err.stack : undefined
         });
+    }
+});
+
+// FORGOT PASSWORD
+router.post('/forgot-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required' });
+        }
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: 'No account found with this email address.' });
+        }
+
+        // Generate 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // Hash the OTP
+        const salt = await bcrypt.genSalt(10);
+        const hashedOtp = await bcrypt.hash(otp, salt);
+
+        // Save hashed OTP and expiration (10 minutes)
+        user.resetPasswordOTP = hashedOtp;
+        user.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
+        await user.save();
+
+        // Send email
+        const emailResult = await sendPasswordResetEmail(user.email, user.username, otp);
+
+        if (!emailResult.success) {
+            user.resetPasswordOTP = undefined;
+            user.resetPasswordExpire = undefined;
+            await user.save();
+            return res.status(500).json({ message: 'Email could not be sent' });
+        }
+
+        res.status(200).json({ message: 'If an account with that email exists, an OTP has been sent.' });
+    } catch (error) {
+        console.error('Forgot password error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+// VERIFY OTP
+router.post('/verify-otp', async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+
+        if (!email || !otp) {
+            return res.status(400).json({ message: 'Email and OTP are required' });
+        }
+
+        const user = await User.findOne({
+            email,
+            resetPasswordExpire: { $gt: Date.now() }
+        });
+
+        if (!user || !user.resetPasswordOTP) {
+            return res.status(400).json({ message: 'Invalid or expired OTP' });
+        }
+
+        const isMatch = await bcrypt.compare(otp.toString(), user.resetPasswordOTP);
+
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Invalid or expired OTP' });
+        }
+
+        // Generate a temporary token for resetting password
+        const resetToken = jwt.sign(
+            { id: user._id, type: 'password_reset' },
+            JWT_SECRET,
+            { expiresIn: '15m' }
+        );
+
+        res.status(200).json({
+            message: 'OTP verified successfully',
+            resetToken
+        });
+    } catch (error) {
+        console.error('Verify OTP error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+// RESET PASSWORD
+router.put('/reset-password', async (req, res) => {
+    try {
+        const { resetToken, newPassword } = req.body;
+
+        if (!resetToken || !newPassword) {
+            return res.status(400).json({ message: 'Token and new password are required' });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+        }
+
+        // Verify token
+        let decoded;
+        try {
+            decoded = jwt.verify(resetToken, JWT_SECRET);
+        } catch (err) {
+            return res.status(400).json({ message: 'Invalid or expired reset token' });
+        }
+
+        if (decoded.type !== 'password_reset') {
+            return res.status(400).json({ message: 'Invalid token type' });
+        }
+
+        const user = await User.findById(decoded.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Hash new password
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
+
+        // Clear OTP fields
+        user.resetPasswordOTP = undefined;
+        user.resetPasswordExpire = undefined;
+
+        await user.save();
+
+        res.status(200).json({ message: 'Password reset successfully' });
+    } catch (error) {
+        console.error('Reset password error:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
 });
 
