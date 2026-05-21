@@ -238,7 +238,7 @@ const AboutPage = () => {
                         <p className={`text-xl ${theme === 'dark' ? 'text-slate-400' : 'text-gray-600'}`}>The creators behind EduBoard</p>
                     </motion.div>
 
-                    <div className="grid md:grid-cols-3 gap-8">
+                    <div className="grid md:grid-cols-2 gap-12 max-w-4xl mx-auto">
                         {team.map((member, index) => (
                             <motion.div
                                 key={index}
