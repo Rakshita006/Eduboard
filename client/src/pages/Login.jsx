@@ -1,18 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import { FaArrowRight, FaLock, FaEnvelope } from 'react-icons/fa';
+import { FaArrowRight, FaLock, FaEnvelope, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { BsLightningChargeFill } from 'react-icons/bs';
 import TeacherCharacter from '../components/TeacherCharacter';
 
 const Login = () => {
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [error, setError] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
     const from = location.state?.from || '/dashboard';
-    const successMessage = location.state?.message || '';
+    const [successMessage, setSuccessMessage] = useState(location.state?.message || '');
+
+    useEffect(() => {
+        if (error) {
+            const timer = setTimeout(() => setError(''), 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [error]);
+
+    useEffect(() => {
+        if (successMessage) {
+            const timer = setTimeout(() => setSuccessMessage(''), 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [successMessage]);
+
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
@@ -35,8 +51,20 @@ const Login = () => {
         } catch (err) {
             const errorData = err.response?.data;
 
-            // Check if it's an unverified teacher
-            if (errorData?.error === 'ACCOUNT_NOT_VERIFIED') {
+            if (errorData?.error === 'EMAIL_NOT_VERIFIED') {
+                setError(
+                    <span>
+                        {errorData.message}{' '}
+                        <button
+                            type="button"
+                            onClick={() => navigate('/verify-email', { state: { email: errorData.email, autoSend: true } })}
+                            className="underline cursor-pointer text-indigo-400 hover:text-indigo-300 font-semibold bg-transparent border-none p-0 inline"
+                        >
+                            Verify Now.
+                        </button>
+                    </span>
+                );
+            } else if (errorData?.error === 'ACCOUNT_NOT_VERIFIED') {
                 // Store token temporarily for verification page
                 if (err.response?.data?.token) {
                     localStorage.setItem('token', err.response.data.token);
@@ -135,14 +163,19 @@ const Login = () => {
                         <div className="relative">
                             <FaLock className="absolute top-4 left-4 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
                             <input
-                                type="password"
+                                type={showPassword ? "text" : "password"}
                                 name="password"
                                 value={formData.password}
                                 onChange={handleChange}
-                                className="w-full input-glass pl-12 pr-4 py-3.5 rounded-xl focus:outline-none"
+                                className="w-full input-glass pl-12 pr-12 py-3.5 rounded-xl focus:outline-none"
                                 placeholder="••••••••"
                                 required
                             />
+                            {showPassword ? (
+                                <FaEyeSlash className="absolute top-4 right-4 text-slate-500 cursor-pointer" onClick={() => setShowPassword(false)} />
+                            ) : (
+                                <FaEye className="absolute top-4 right-4 text-slate-500 cursor-pointer" onClick={() => setShowPassword(true)} />
+                            )}
                         </div>
                     </div>
 
