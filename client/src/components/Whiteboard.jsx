@@ -1886,6 +1886,7 @@ const Whiteboard = () => {
                     break; // ← NEW
                 case 'escape': // ← NEW
                     setSelectedElement(null); // ← NEW
+                    setTool('select'); // ← NEW
                     if (isDrawing) { // ← NEW
                         setIsDrawing(false); // ← NEW
                         currentStrokeRef.current = null; // ← NEW
