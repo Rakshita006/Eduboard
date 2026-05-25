@@ -14,8 +14,9 @@ const ContactPage = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitStatus, setSubmitStatus] = useState({ success: null, message: '' });
 
+    // FIX 1: formData ki jagah e.target kar diya
     const handleChange = (e) => {
-        const { name, value } = formData;
+        const { name, value } = e.target; 
         setFormData(prev => ({
             ...prev,
             [name]: value
@@ -81,7 +82,8 @@ const ContactPage = () => {
 
             {/* Contact Form Section */}
             <section className="pb-24 px-6 relative z-10">
-                <div className="max-w-2xl mx-auto">
+                {/* FIX 2: max-w-2xl ko badal kar max-w-lg kar diya */}
+                <div className="max-w-lg mx-auto">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
