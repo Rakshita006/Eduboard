@@ -369,6 +369,7 @@ io.on('connection', (socket) => {
         socket.emit('load-board', {
           elements: board.elements,
           allowedStudents: board.allowedStudents || [],
+          allowStudentEditing: board.allowStudentEditing || false, // FIX #95: send persisted toggle state to client
           boardName: board.name,
           teacherName: board.createdBy?.username || 'Unknown Teacher'
         });
