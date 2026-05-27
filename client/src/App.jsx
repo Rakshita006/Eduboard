@@ -23,6 +23,7 @@ import VerifyRegistrationOTP from "./pages/VerifyRegistrationOTP";
 import ScrollToTop from "./components/ScrollToTop";
 import { ThemeProvider } from "./context/ThemeContext";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import NotFound from "./pages/NotFound";
 
 const PrivateRoute = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -181,6 +182,10 @@ const AppLayout = () => {
               </AdminRoute>
             }
           />
+
+          <Route path="*" element={<NotFound />} />
+
+          
         </Routes>
       </div>
     </div>
