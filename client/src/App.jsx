@@ -22,6 +22,7 @@ import ResetPassword from "./pages/ResetPassword";
 import VerifyRegistrationOTP from "./pages/VerifyRegistrationOTP";
 import ScrollToTop from "./components/ScrollToTop";
 import { ThemeProvider } from "./context/ThemeContext";
+import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 const PrivateRoute = ({ children }) => {
@@ -97,6 +98,7 @@ const AppLayout = () => {
           <Route path="/" element={<LandingPage />} />
           <Route path="/features" element={<FeaturesPage />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/terms" element={<TermsOfService />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           {/* Auth Routes */}
           <Route
