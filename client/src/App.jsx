@@ -20,6 +20,34 @@ import ScrollToTop from './components/ScrollToTop';
 import { ThemeProvider } from './context/ThemeContext';
 
 // --- Route Protection Guards ---
+import Navbar from "./components/Navbar";
+import React from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Whiteboard from "./components/Whiteboard";
+import Dashboard from "./pages/Dashboard";
+import LandingPage from "./pages/LandingPage";
+import FeaturesPage from "./pages/FeaturesPage";
+import AboutPage from "./pages/AboutPage";
+import VerificationPending from "./pages/VerificationPending";
+import AdminPanel from "./pages/AdminPanel";
+import ForgotPassword from "./pages/ForgotPassword";
+import VerifyOTP from "./pages/VerifyOTP";
+import ResetPassword from "./pages/ResetPassword";
+import VerifyRegistrationOTP from "./pages/VerifyRegistrationOTP";
+import ScrollToTop from "./components/ScrollToTop";
+import { ThemeProvider } from "./context/ThemeContext";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import NotFound from "./pages/NotFound";
+
 const PrivateRoute = ({ children }) => {
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -93,6 +121,8 @@ const AppLayout = () => {
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/contact" element={<ContactPage />} />
 
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           {/* Auth Routes */}
           <Route
             path="/login"
@@ -144,10 +174,42 @@ const AppLayout = () => {
           />
 
           {/* Private Routes */}
-          <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-          <Route path="/board/:roomId" element={<PrivateRoute><Whiteboard /></PrivateRoute>} />
-          <Route path="/verification-pending" element={<PrivateRoute><VerificationPending /></PrivateRoute>} />
-          <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
+          <Route
+            path="/dashboard"
+            element={
+              <PrivateRoute>
+                <Dashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/board/:roomId"
+            element={
+              <PrivateRoute>
+                <Whiteboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/verification-pending"
+            element={
+              <PrivateRoute>
+                <VerificationPending />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminPanel />
+              </AdminRoute>
+            }
+          />
+
+          <Route path="*" element={<NotFound />} />
+
+          
         </Routes>
       </div>
     </div>
