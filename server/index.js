@@ -93,12 +93,16 @@ app.post('/api/boards/create', verifyToken, async (req, res) => {
       return res.status(401).json({ message: 'Invalid authentication state' });
     }
 
+    if (!mongoose.Types.ObjectId.isValid(authUserId)) {
+      return res.status(400).json({ message: 'Invalid authenticated user ID' });
+    }
+
     if (!name || !roomId) {
       return res.status(400).json({ message: 'Name and roomId are required' });
     }
 
-    const user = await User.findById(authUserId);
-    if (!user) {
+    const userExists = await User.exists({ _id: authUserId });
+    if (!userExists) {
       return res.status(404).json({ message: 'Authenticated user not found' });
     }
 
