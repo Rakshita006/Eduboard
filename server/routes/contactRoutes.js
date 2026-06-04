@@ -11,11 +11,15 @@ router.post('/', async (req, res) => {
 
     try {
         // Owner ke existing email service ko use karke mail bhejna
-        await sendContactFormEmail(
+        const result = await sendContactFormEmail(
             process.env.ADMIN_EMAIL, // Admin (yaani tumhe) mail aayega
             subject ? `[EduBoard Contact] ${subject}` : `[EduBoard Contact] New message from ${name}`,
             `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`
         );
+
+        if (result && result.success === false) {
+            throw new Error(result.error || 'Failed to relay email');
+        }
         
         console.log(`[CONTACT FORM] Message received and sent via Nodemailer from ${name}`);
         res.status(200).json({ message: 'Your message has been sent successfully.' });

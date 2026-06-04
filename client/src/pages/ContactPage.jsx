@@ -42,6 +42,11 @@ const ContactPage = () => {
                     message: 'Thank you! Your message has been sent successfully.'
                 });
                 setFormData({ name: '', email: '', message: '' });
+                
+                // Hide success message after 5 seconds
+                setTimeout(() => {
+                    setSubmitStatus({ success: null, message: '' });
+                }, 5000);
             }
         } catch (error) {
             console.error('Error sending message:', error);
