@@ -343,6 +343,29 @@ io.use((socket, next) => {
   }
 });
 
+// Helper functions for Socket.IO Authorization
+const isTeacher = async (roomId, userId) => {
+  try {
+    const board = await Board.findOne({ roomId });
+    return board && board.createdBy.toString() === userId;
+  } catch (err) {
+    return false;
+  }
+};
+
+const isAuthorizedToEdit = async (roomId, userId) => {
+  try {
+    const board = await Board.findOne({ roomId });
+    if (!board) return false;
+    if (board.createdBy.toString() === userId) return true;
+    if (board.allowStudentEditing) return true;
+    if (board.allowedStudents && board.allowedStudents.some(id => id.toString() === userId)) return true;
+    return false;
+  } catch (err) {
+    return false;
+  }
+};
+
 // Socket.io Logic
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id, 'User ID:', socket.userId);
@@ -537,11 +560,13 @@ io.on('connection', (socket) => {
   });
 
   // Real-time stroke updates (while drawing) - no DB save, just broadcast
-  socket.on('drawing-stroke', (strokeData) => {
+  socket.on('drawing-stroke', async (strokeData) => {
+    if (!(await isAuthorizedToEdit(strokeData.roomId, socket.userId))) return;
     socket.to(strokeData.roomId).emit('drawing-stroke', strokeData);
   });
 
   socket.on('draw-element', async (element) => {
+    if (!(await isAuthorizedToEdit(element.roomId, socket.userId))) return;
     // Broadcast element to room
     socket.to(element.roomId).emit('draw-element', element);
 
@@ -578,6 +603,7 @@ io.on('connection', (socket) => {
 
   // Delete element (for undo synchronization)
   socket.on('delete-element', async ({ roomId, elementId }) => {
+    if (!(await isAuthorizedToEdit(roomId, socket.userId))) return;
     console.log(`[DELETE-ELEMENT] Received from ${socket.id}, roomId: ${roomId}, elementId: ${elementId}`);
     // Broadcast deletion to room
     socket.to(roomId).emit('delete-element', elementId);
@@ -600,6 +626,7 @@ io.on('connection', (socket) => {
 
   // Update element (for eraser redo synchronization)
   socket.on('update-element', async ({ roomId, elementId, updates }) => {
+    if (!(await isAuthorizedToEdit(roomId, socket.userId))) return;
     console.log(`[UPDATE-ELEMENT] Received from ${socket.id}, roomId: ${roomId}, elementId: ${elementId}`);
     // Broadcast update to room
     socket.to(roomId).emit('update-element', { elementId, updates });
@@ -624,6 +651,7 @@ io.on('connection', (socket) => {
 
   // Sync elements (for redo to maintain correct order)
   socket.on('sync-elements', async ({ roomId, elements }) => {
+    if (!(await isAuthorizedToEdit(roomId, socket.userId))) return;
     console.log(`[SYNC-ELEMENTS] Received from ${socket.id}, syncing ${elements.length} elements`);
     // Broadcast full element array to all other users
     socket.to(roomId).emit('sync-elements', elements);
@@ -647,6 +675,7 @@ io.on('connection', (socket) => {
 
   // Sync state (for redo to maintain exact element order)
   socket.on('sync-state', async ({ roomId, elements }) => {
+    if (!(await isAuthorizedToEdit(roomId, socket.userId))) return;
     console.log(`[SYNC-STATE] Broadcasting ${elements.length} elements to room ${roomId}`);
     // Broadcast to all other users
     socket.to(roomId).emit('sync-state', elements);
@@ -685,7 +714,8 @@ io.on('connection', (socket) => {
   });
 
   // Theme synchronization
-  socket.on('change-theme', ({ roomId, isDark }) => {
+  socket.on('change-theme', async ({ roomId, isDark }) => {
+    if (!(await isTeacher(roomId, socket.userId))) return;
     console.log(`[THEME-SYNC] Received change-theme from ${socket.id} for room ${roomId}, isDark: ${isDark}`);
     // Broadcast theme change to all students in room
     socket.to(roomId).emit('theme-changed', isDark);
@@ -693,14 +723,15 @@ io.on('connection', (socket) => {
   });
 
   socket.on('cursor-move', (data) => {
+    // Optional: could protect cursor-move, but usually non-destructive
     socket.to(data.roomId).emit('cursor-move', data);
   });
 
   socket.on('viewport-change', (data) => {
+    // Optional: non-destructive
     socket.to(data.roomId).emit('viewport-change', data);
   });
 
-  // Grant editing permission to specific student
   socket.on('grant-participant-permission', async ({ roomId, studentId }) => {
     try {
       // FIX #94: verify the emitting user is the board owner
